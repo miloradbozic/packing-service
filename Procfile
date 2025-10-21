@@ -1,1 +1,1 @@
-web: ./packing-service
+web: bin/packing-service

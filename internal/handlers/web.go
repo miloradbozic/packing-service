@@ -7,24 +7,27 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/miloradbozic/packing-service/internal/database"
 	"github.com/miloradbozic/packing-service/internal/models"
 	"github.com/miloradbozic/packing-service/internal/service"
 )
 
 type WebHandler struct {
-	service   *service.PackingService
-	templates *template.Template
+	service      *service.PackingService
+	packSizeRepo *database.PackSizeRepository
+	templates    *template.Template
 }
 
-func NewWebHandler(packingService *service.PackingService) (*WebHandler, error) {
+func NewWebHandler(packingService *service.PackingService, packSizeRepo *database.PackSizeRepository) (*WebHandler, error) {
 	tmpl, err := template.ParseGlob("templates/*.html")
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse templates: %w", err)
 	}
 
 	return &WebHandler{
-		service:   packingService,
-		templates: tmpl,
+		service:      packingService,
+		packSizeRepo: packSizeRepo,
+		templates:    tmpl,
 	}, nil
 }
 

@@ -52,7 +52,7 @@ func main() {
 
 	// Initialize handlers
 	apiHandler := handlers.NewAPIHandler(packingService, packSizeRepo)
-	webHandler, err := handlers.NewWebHandler(packingService)
+	webHandler, err := handlers.NewWebHandler(packingService, packSizeRepo)
 	if err != nil {
 		log.Fatalf("Failed to initialize web handler: %v", err)
 	}

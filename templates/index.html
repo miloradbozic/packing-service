@@ -33,10 +33,99 @@
         .pack-size-item {
             border: 3px solid black;
             padding: 5px 10px;
-            margin: 5px 0;
-            display: inline-block;
+            margin: 5px 5px 5px 0;
+            display: inline-flex;
+            align-items: center;
             background: white;
             min-width: 80px;
+            gap: 5px;
+        }
+        
+        .pack-size-item input {
+            border: none;
+            background: transparent;
+            font-size: inherit;
+            font-weight: inherit;
+            text-align: center;
+            width: 60px;
+            outline: none;
+        }
+        
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        
+        .btn-delete:hover {
+            background: #c82333;
+        }
+        
+        .add-pack-section {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 5px;
+        }
+        
+        .add-pack-form {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .add-pack-form input {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            width: 80px;
+        }
+        
+        .btn-add {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .btn-add:hover {
+            background: #218838;
+        }
+        
+        .save-all-section {
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .btn-save-all {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .btn-save-all:hover {
+            background: #0056b3;
+        }
+        
+        .btn-save-all:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
         }
         
         h2 {
@@ -114,9 +203,26 @@
     
     <div class="pack-sizes-box">
         <div class="pack-sizes-title">Pack Sizes</div>
-        {{range .PackSizes}}
-        <div class="pack-size-item">{{.}}</div>
-        {{end}}
+        <div id="pack-sizes-container">
+            {{range .PackSizes}}
+            <div class="pack-size-item" data-size="{{.}}">
+                <input type="number" value="{{.}}" min="1" onchange="updatePackSize(this)" onblur="updatePackSize(this)">
+                <button class="btn-delete" onclick="deletePackSize(this)" title="Delete">×</button>
+            </div>
+            {{end}}
+        </div>
+        
+        <div class="add-pack-section">
+            <div class="add-pack-form">
+                <label>Add new pack size:</label>
+                <input type="number" id="new-pack-size" placeholder="Size" min="1">
+                <button class="btn-add" onclick="addPackSize()">Add</button>
+            </div>
+        </div>
+        
+        <div class="save-all-section">
+            <button class="btn-save-all" id="save-all-btn" onclick="saveAllChanges()" disabled>Save All Changes</button>
+        </div>
     </div>
     
     <h2>Calculate packs for order</h2>
@@ -155,5 +261,225 @@
         {{end}}
     </table>
     {{end}}
+    
+    <script>
+        let pendingChanges = new Map(); // Track changes before saving
+        let packSizeIds = new Map(); // Map pack sizes to their database IDs
+        
+        // Load pack sizes with IDs on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPackSizesWithIds();
+        });
+        
+        // Load pack sizes from API to get their IDs
+        async function loadPackSizesWithIds() {
+            try {
+                const response = await fetch('/api/v1/pack-sizes');
+                const data = await response.json();
+                
+                // Map pack sizes to their IDs
+                data.pack_sizes.forEach(pack => {
+                    if (pack.is_active) {
+                        packSizeIds.set(pack.size, pack.id);
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading pack sizes:', error);
+            }
+        }
+        
+        // Update pack size when input changes
+        function updatePackSize(input) {
+            const packItem = input.closest('.pack-size-item');
+            const newValue = parseInt(input.value);
+            const oldValue = parseInt(packItem.dataset.size);
+            
+            if (!newValue || newValue <= 0) {
+                alert('Please enter a valid pack size');
+                input.value = oldValue; // Restore original value
+                return;
+            }
+            
+            // Track the change
+            pendingChanges.set(oldValue, {
+                oldValue: oldValue,
+                newValue: newValue,
+                action: 'update'
+            });
+            
+            // Update the data attribute
+            packItem.dataset.size = newValue;
+            
+            // Enable save all button
+            document.getElementById('save-all-btn').disabled = false;
+        }
+        
+        // Delete pack size
+        function deletePackSize(button) {
+            const packItem = button.closest('.pack-size-item');
+            const value = parseInt(packItem.dataset.size);
+            
+            if (!confirm(`Are you sure you want to delete pack size ${value}?`)) {
+                return;
+            }
+            
+            // Track the deletion
+            pendingChanges.set(value, {
+                oldValue: value,
+                action: 'delete'
+            });
+            
+            // Remove from display
+            packItem.remove();
+            
+            // Enable save all button
+            document.getElementById('save-all-btn').disabled = false;
+        }
+        
+        // Add new pack size
+        function addPackSize() {
+            const input = document.getElementById('new-pack-size');
+            const value = parseInt(input.value);
+            
+            if (!value || value <= 0) {
+                alert('Please enter a valid pack size');
+                return;
+            }
+            
+            // Check if pack size already exists
+            const existingItems = document.querySelectorAll('.pack-size-item');
+            for (let item of existingItems) {
+                if (parseInt(item.dataset.size) === value) {
+                    alert('Pack size already exists');
+                    return;
+                }
+            }
+            
+            // Create new pack size item
+            const container = document.getElementById('pack-sizes-container');
+            const newItem = document.createElement('div');
+            newItem.className = 'pack-size-item';
+            newItem.dataset.size = value;
+            newItem.innerHTML = `
+                <input type="number" value="${value}" min="1" onchange="updatePackSize(this)" onblur="updatePackSize(this)">
+                <button class="btn-delete" onclick="deletePackSize(this)" title="Delete">×</button>
+            `;
+            
+            container.appendChild(newItem);
+            
+            // Track the addition
+            pendingChanges.set(value, {
+                newValue: value,
+                action: 'create'
+            });
+            
+            // Clear input
+            input.value = '';
+            
+            // Enable save all button
+            document.getElementById('save-all-btn').disabled = false;
+        }
+        
+        // Save all changes
+        async function saveAllChanges() {
+            if (pendingChanges.size === 0) {
+                return;
+            }
+            
+            const saveBtn = document.getElementById('save-all-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+            
+            try {
+                // Process all changes
+                for (let [key, change] of pendingChanges) {
+                    if (change.action === 'create') {
+                        await createPackSize(change.newValue);
+                    } else if (change.action === 'update') {
+                        await updatePackSize(change.oldValue, change.newValue);
+                    } else if (change.action === 'delete') {
+                        await deletePackSizeFromAPI(change.oldValue);
+                    }
+                }
+                
+                // Clear pending changes
+                pendingChanges.clear();
+                
+                // Reload page to reflect changes
+                location.reload();
+                
+            } catch (error) {
+                console.error('Error saving changes:', error);
+                alert('Error saving changes: ' + error.message);
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save All Changes';
+            }
+        }
+        
+        // API calls
+        async function createPackSize(size) {
+            const response = await fetch('/api/v1/pack-sizes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    size: size,
+                    is_active: true
+                })
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error);
+            }
+        }
+        
+        async function updatePackSize(oldSize, newSize) {
+            const packId = packSizeIds.get(oldSize);
+            if (!packId) {
+                throw new Error('Pack size ID not found');
+            }
+            
+            const response = await fetch(`/api/v1/pack-sizes/${packId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    size: newSize,
+                    is_active: true
+                })
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error);
+            }
+        }
+        
+        async function deletePackSizeFromAPI(size) {
+            const packId = packSizeIds.get(size);
+            if (!packId) {
+                throw new Error('Pack size ID not found');
+            }
+            
+            const response = await fetch(`/api/v1/pack-sizes/${packId}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error);
+            }
+        }
+        
+        // Handle Enter key in add input
+        document.getElementById('new-pack-size').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addPackSize();
+            }
+        });
+    </script>
 </body>
 </html>

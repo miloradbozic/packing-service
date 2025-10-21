@@ -3,20 +3,17 @@ package service
 import (
 	"fmt"
 	"sort"
+
+	"github.com/miloradbozic/packing-service/internal/database"
 )
 
 type PackingService struct {
-	packSizes []int
+	packSizeRepo *database.PackSizeRepository
 }
 
-func NewPackingService(packSizes []int) *PackingService {
-	// Create a copy and sort in descending order for optimization
-	sizes := make([]int, len(packSizes))
-	copy(sizes, packSizes)
-	sort.Sort(sort.Reverse(sort.IntSlice(sizes)))
-
+func NewPackingService(packSizeRepo *database.PackSizeRepository) *PackingService {
 	return &PackingService{
-		packSizes: sizes,
+		packSizeRepo: packSizeRepo,
 	}
 }
 
@@ -31,11 +28,17 @@ func (ps *PackingService) CalculatePacks(itemsOrdered int) (*PackSolution, error
 		return nil, fmt.Errorf("items ordered must be positive")
 	}
 
-	if len(ps.packSizes) == 0 {
+	// Get active pack sizes from database
+	packSizes, err := ps.packSizeRepo.GetAllActive()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pack sizes: %w", err)
+	}
+
+	if len(packSizes) == 0 {
 		return nil, fmt.Errorf("no pack sizes configured")
 	}
 
-	solution := ps.findOptimalSolution(itemsOrdered)
+	solution := ps.findOptimalSolution(itemsOrdered, packSizes)
 
 	if solution == nil {
 		return nil, fmt.Errorf("unable to fulfill order with current pack sizes")
@@ -44,9 +47,14 @@ func (ps *PackingService) CalculatePacks(itemsOrdered int) (*PackSolution, error
 	return solution, nil
 }
 
-func (ps *PackingService) findOptimalSolution(target int) *PackSolution {
+func (ps *PackingService) findOptimalSolution(target int, packSizes []int) *PackSolution {
+	// Sort pack sizes in descending order for optimization
+	sizes := make([]int, len(packSizes))
+	copy(sizes, packSizes)
+	sort.Sort(sort.Reverse(sort.IntSlice(sizes)))
+
 	// Dynamic programming approach
-	maxItems := target + ps.packSizes[0]
+	maxItems := target + sizes[0]
 	dp := make([]int, maxItems+1)
 	parent := make([]int, maxItems+1)
 
@@ -63,7 +71,7 @@ func (ps *PackingService) findOptimalSolution(target int) *PackSolution {
 			continue
 		}
 
-		for _, packSize := range ps.packSizes {
+		for _, packSize := range sizes {
 			next := i + packSize
 			if next <= maxItems {
 				if dp[next] == -1 || dp[next] > dp[i]+packSize {
@@ -106,9 +114,6 @@ func (ps *PackingService) findOptimalSolution(target int) *PackSolution {
 	}
 }
 
-func (ps *PackingService) GetPackSizes() []int {
-	sizes := make([]int, len(ps.packSizes))
-	copy(sizes, ps.packSizes)
-	sort.Ints(sizes) // Return in ascending order
-	return sizes
+func (ps *PackingService) GetPackSizes() ([]int, error) {
+	return ps.packSizeRepo.GetAllActive()
 }

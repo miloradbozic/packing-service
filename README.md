@@ -15,8 +15,10 @@ The service calculates the optimal number of packs needed to fulfill customer or
 - ✅ Minimizes number of packs used
 - ✅ Web UI for easy interaction
 - ✅ RESTful API for programmatic access
-- ✅ Configurable pack sizes via YAML
-- ✅ Docker support
+- ✅ **PostgreSQL database storage** for pack sizes
+- ✅ **CRUD API** for managing pack sizes
+- ✅ **Database migrations** for schema management
+- ✅ Docker support with PostgreSQL
 
 ## Quick Start
 
@@ -27,9 +29,21 @@ go run main.go
 
 Visit http://localhost:8080 for the web UI
 
-### Run with Docker
+### Run with Docker (includes PostgreSQL)
 ```bash
 docker-compose up
+```
+
+### Run locally with PostgreSQL
+```bash
+# Start PostgreSQL
+docker-compose up -d postgres
+
+# Run migrations
+make migrate
+
+# Start the service
+go run main.go
 ```
 
 ### Run tests
@@ -81,9 +95,79 @@ make test
 }
 ```
 
+## Pack Size Management API
+
+### List All Pack Sizes
+
+**Endpoint:** `GET /api/v1/pack-sizes`
+
+**Response:**
+```json
+{
+  "pack_sizes": [
+    {
+      "id": 1,
+      "size": 250,
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### Create Pack Size
+
+**Endpoint:** `POST /api/v1/pack-sizes`
+
+**Request:**
+```json
+{
+  "size": 750,
+  "is_active": true
+}
+```
+
+### Update Pack Size
+
+**Endpoint:** `PUT /api/v1/pack-sizes/{id}`
+
+**Request:**
+```json
+{
+  "size": 750,
+  "is_active": false
+}
+```
+
+### Delete Pack Size
+
+**Endpoint:** `DELETE /api/v1/pack-sizes/{id}`
+
+**Response:** `204 No Content`
+
 ## Configuration
 
-Pack sizes can be modified in `config.yaml`:
+### Database Configuration
+
+The service now uses PostgreSQL for storing pack sizes. Database settings can be configured in `config.yaml`:
+
+```yaml
+database:
+  host: "localhost"
+  port: 5432
+  user: "packing_user"
+  password: "packing_password"
+  dbname: "packing_service"
+  sslmode: "disable"
+  max_open_conns: 25
+  max_idle_conns: 25
+  conn_max_lifetime: "5m"
+```
+
+### Legacy Configuration
+
+Pack sizes in `config.yaml` are now used only for initial migration:
 ```yaml
 packs:
   sizes:
@@ -92,6 +176,18 @@ packs:
     - 1000
     - 2000
     - 5000
+```
+
+## Database Management
+
+### Run Migrations
+```bash
+make migrate
+```
+
+### Development Setup
+```bash
+make dev  # Starts PostgreSQL, runs migrations, and starts the service
 ```
 
 ## Test Examples

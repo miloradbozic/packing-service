@@ -9,13 +9,26 @@ import (
 )
 
 type Config struct {
-	Server ServerConfig `yaml:"server"`
-	Packs  PacksConfig  `yaml:"packs"`
+	Server   ServerConfig   `yaml:"server"`
+	Database DatabaseConfig `yaml:"database"`
+	Packs    PacksConfig    `yaml:"packs"`
 }
 
 type ServerConfig struct {
 	Port int    `yaml:"port"`
 	Host string `yaml:"host"`
+}
+
+type DatabaseConfig struct {
+	Host            string `yaml:"host"`
+	Port            int    `yaml:"port"`
+	User            string `yaml:"user"`
+	Password        string `yaml:"password"`
+	DBName          string `yaml:"dbname"`
+	SSLMode         string `yaml:"sslmode"`
+	MaxOpenConns    int    `yaml:"max_open_conns"`
+	MaxIdleConns    int    `yaml:"max_idle_conns"`
+	ConnMaxLifetime string `yaml:"conn_max_lifetime"`
 }
 
 type PacksConfig struct {

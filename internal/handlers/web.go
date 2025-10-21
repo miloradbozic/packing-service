@@ -34,13 +34,19 @@ func (h *WebHandler) HomePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	packSizes, err := h.service.GetPackSizes()
+	if err != nil {
+		http.Error(w, "Failed to get pack sizes", http.StatusInternalServerError)
+		return
+	}
+
 	data := struct {
 		PackSizes []int
 		Results   *models.CalculateResponse
 		Error     string
 		Items     string
 	}{
-		PackSizes: h.service.GetPackSizes(),
+		PackSizes: packSizes,
 	}
 
 	if err := h.templates.ExecuteTemplate(w, "index.html", data); err != nil {
@@ -54,13 +60,19 @@ func (h *WebHandler) handleCalculate(w http.ResponseWriter, r *http.Request) {
 	itemsStr := r.FormValue("items")
 	items, err := strconv.Atoi(itemsStr)
 
+	packSizes, packErr := h.service.GetPackSizes()
+	if packErr != nil {
+		http.Error(w, "Failed to get pack sizes", http.StatusInternalServerError)
+		return
+	}
+
 	data := struct {
 		PackSizes []int
 		Results   *models.CalculateResponse
 		Error     string
 		Items     string
 	}{
-		PackSizes: h.service.GetPackSizes(),
+		PackSizes: packSizes,
 		Items:     itemsStr,
 	}
 

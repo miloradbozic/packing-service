@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/miloradbozic/packing-service/internal/config"
+	"github.com/miloradbozic/packing-service/internal/database"
 	"github.com/miloradbozic/packing-service/internal/handlers"
 	"github.com/miloradbozic/packing-service/internal/middleware"
 	"github.com/miloradbozic/packing-service/internal/service"
@@ -25,11 +26,32 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
+	// Connect to database
+	db, err := database.NewConnection(&cfg.Database)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	// Run migrations
+	migrator := database.NewMigrator(db)
+	if err := migrator.RunMigrations("migrations"); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+
+	// Initialize repository
+	packSizeRepo := database.NewPackSizeRepository(db)
+
+	// Migrate pack sizes from config if database is empty
+	if err := packSizeRepo.MigrateFromConfig(cfg.Packs.Sizes); err != nil {
+		log.Printf("Warning: Failed to migrate pack sizes from config: %v", err)
+	}
+
 	// Initialize service
-	packingService := service.NewPackingService(cfg.Packs.Sizes)
+	packingService := service.NewPackingService(packSizeRepo)
 
 	// Initialize handlers
-	apiHandler := handlers.NewAPIHandler(packingService)
+	apiHandler := handlers.NewAPIHandler(packingService, packSizeRepo)
 	webHandler, err := handlers.NewWebHandler(packingService)
 	if err != nil {
 		log.Fatalf("Failed to initialize web handler: %v", err)
@@ -46,6 +68,13 @@ func main() {
 	api.Use(middleware.CORS)
 	api.HandleFunc("/calculate", apiHandler.Calculate).Methods("POST", "OPTIONS")
 	api.HandleFunc("/config", apiHandler.GetConfig).Methods("GET", "OPTIONS")
+	
+	// Pack size management routes
+	api.HandleFunc("/pack-sizes", apiHandler.ListPackSizes).Methods("GET", "OPTIONS")
+	api.HandleFunc("/pack-sizes", apiHandler.CreatePackSize).Methods("POST", "OPTIONS")
+	api.HandleFunc("/pack-sizes/{id}", apiHandler.GetPackSize).Methods("GET", "OPTIONS")
+	api.HandleFunc("/pack-sizes/{id}", apiHandler.UpdatePackSize).Methods("PUT", "OPTIONS")
+	api.HandleFunc("/pack-sizes/{id}", apiHandler.DeletePackSize).Methods("DELETE", "OPTIONS")
 
 	// Health check
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {

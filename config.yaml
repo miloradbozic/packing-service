@@ -2,6 +2,18 @@ server:
   port: 8080
   host: "0.0.0.0"
 
+database:
+  host: "localhost"
+  port: 5432
+  user: "packing_user"
+  password: "packing_password"
+  dbname: "packing_service"
+  sslmode: "disable"
+  max_open_conns: 25
+  max_idle_conns: 25
+  conn_max_lifetime: "5m"
+
+# Legacy pack sizes (will be migrated to database on first run)
 packs:
   sizes:
     - 250

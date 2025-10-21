@@ -24,3 +24,26 @@ type ErrorResponse struct {
 type ConfigResponse struct {
 	PackSizes []int `json:"pack_sizes"`
 }
+
+// Pack size management models
+type PackSizeListResponse struct {
+	PackSizes []PackSizeResponse `json:"pack_sizes"`
+}
+
+type PackSizeResponse struct {
+	ID        int    `json:"id"`
+	Size      int    `json:"size"`
+	IsActive  bool   `json:"is_active"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+type CreatePackSizeRequest struct {
+	Size     int  `json:"size"`
+	IsActive bool `json:"is_active"`
+}
+
+type UpdatePackSizeRequest struct {
+	Size     int  `json:"size"`
+	IsActive bool `json:"is_active"`
+}

@@ -12,12 +12,3 @@ database:
   max_open_conns: 25
   max_idle_conns: 25
   conn_max_lifetime: "5m"
-
-# Legacy pack sizes (will be migrated to database on first run)
-packs:
-  sizes:
-    - 250
-    - 500
-    - 1000
-    - 2000
-    - 5000

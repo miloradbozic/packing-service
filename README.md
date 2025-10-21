@@ -30,7 +30,11 @@ The service calculates the optimal number of packs needed to fulfill customer or
 ### 🚀 One-Command Setup (Recommended)
 ```bash
 # Clone the repository
-git clone <repo-url>
+git clone https://github.com/miloradbozic/packing-service.git
+# Alternatively, clone the repository with ssh
+git clone git@github.com:miloradbozic/packing-service.git
+
+# Move to the service repo
 cd packing-service
 
 # Start everything (database + service)

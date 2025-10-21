@@ -15,10 +15,10 @@ import (
 
 type APIHandler struct {
 	service      *service.PackingService
-	packSizeRepo *database.PackSizeRepository
+	packSizeRepo database.PackSizeRepositoryInterface
 }
 
-func NewAPIHandler(packingService *service.PackingService, packSizeRepo *database.PackSizeRepository) *APIHandler {
+func NewAPIHandler(packingService *service.PackingService, packSizeRepo database.PackSizeRepositoryInterface) *APIHandler {
 	return &APIHandler{
 		service:      packingService,
 		packSizeRepo: packSizeRepo,

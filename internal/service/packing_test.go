@@ -115,3 +115,24 @@ func TestPackingService_CalculatePacks(t *testing.T) {
 		})
 	}
 }
+
+func TestPackingService_GetPackSizes(t *testing.T) {
+	packSizes := []int{250, 500, 1000, 2000, 5000}
+	mockRepo := &mockPackSizeRepository{sizes: packSizes}
+	service := NewPackingService(mockRepo)
+
+	sizes, err := service.GetPackSizes()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(sizes) != len(packSizes) {
+		t.Errorf("expected %d pack sizes, got %d", len(packSizes), len(sizes))
+	}
+
+	for i, expectedSize := range packSizes {
+		if sizes[i] != expectedSize {
+			t.Errorf("expected pack size %d at index %d, got %d", expectedSize, i, sizes[i])
+		}
+	}
+}

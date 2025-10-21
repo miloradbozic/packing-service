@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Packs Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: white;
+        }
+        
+        h1 {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+        
+        .pack-sizes-box {
+            border: 1px solid #ccc;
+            padding: 15px;
+            background: #f9f9f9;
+            margin-bottom: 20px;
+            max-width: 500px;
+        }
+        
+        .pack-sizes-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .pack-size-item {
+            border: 3px solid black;
+            padding: 5px 10px;
+            margin: 5px 0;
+            display: inline-block;
+            background: white;
+            min-width: 80px;
+        }
+        
+        h2 {
+            font-size: 28px;
+            margin: 30px 0 20px 0;
+        }
+        
+        .calculate-form {
+            margin: 20px 0;
+        }
+        
+        .calculate-form label {
+            font-size: 20px;
+            margin-right: 10px;
+        }
+        
+        input[type="number"] {
+            border: 1px solid #ccc;
+            padding: 8px;
+            font-size: 18px;
+            width: 200px;
+            margin-right: 20px;
+        }
+        
+        button {
+            background: #5cb85c;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        
+        button:hover {
+            background: #4cae4c;
+        }
+        
+        .error {
+            background: #f2dede;
+            color: #a94442;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ebccd1;
+            max-width: 500px;
+        }
+        
+        table {
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #f9f9f9;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background: #e9e9e9;
+            font-weight: bold;
+        }
+        
+        .summary {
+            background: #d4edda;
+            padding: 15px;
+            margin: 20px 0;
+            border: 1px solid #c3e6cb;
+            max-width: 500px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Order Packs Calculator</h1>
+    
+    <div class="pack-sizes-box">
+        <div class="pack-sizes-title">Pack Sizes</div>
+        {{range .PackSizes}}
+        <div class="pack-size-item">{{.}}</div>
+        {{end}}
+    </div>
+    
+    <h2>Calculate packs for order</h2>
+    
+    <form method="POST" class="calculate-form">
+        <label>Items:</label>
+        <input type="number" name="items" value="{{.Items}}" placeholder="Enter quantity" min="1" required>
+        <button type="submit">Calculate</button>
+    </form>
+    
+    {{if .Error}}
+    <div class="error">{{.Error}}</div>
+    {{end}}
+    
+    {{if .Results}}
+    <div class="summary">
+        <strong>Order Summary:</strong><br>
+        Items Ordered: {{.Results.Items}}<br>
+        Total Items to Ship: {{.Results.TotalItems}}<br>
+        Total Packs: {{.Results.TotalPacks}}<br>
+        {{if gt .Results.ExcessItems 0}}
+        Excess Items: {{.Results.ExcessItems}}
+        {{end}}
+    </div>
+    
+    <table>
+        <tr>
+            <th>Pack</th>
+            <th>Quantity</th>
+        </tr>
+        {{range .Results.Packs}}
+        <tr>
+            <td>{{.Size}}</td>
+            <td>{{.Quantity}}</td>
+        </tr>
+        {{end}}
+    </table>
+    {{end}}
+</body>
+</html>

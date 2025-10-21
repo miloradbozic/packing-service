@@ -2,11 +2,47 @@ package service
 
 import (
 	"testing"
+
+	"github.com/miloradbozic/packing-service/internal/database"
 )
+
+// Mock repository for testing
+type mockPackSizeRepository struct {
+	sizes []int
+}
+
+func (m *mockPackSizeRepository) GetAllActive() ([]int, error) {
+	return m.sizes, nil
+}
+
+func (m *mockPackSizeRepository) GetAll() ([]database.PackSize, error) {
+	return nil, nil
+}
+
+func (m *mockPackSizeRepository) GetByID(id int) (*database.PackSize, error) {
+	return nil, nil
+}
+
+func (m *mockPackSizeRepository) Create(size int) (*database.PackSize, error) {
+	return nil, nil
+}
+
+func (m *mockPackSizeRepository) Update(id int, size int) (*database.PackSize, error) {
+	return nil, nil
+}
+
+func (m *mockPackSizeRepository) Delete(id int) error {
+	return nil
+}
+
+func (m *mockPackSizeRepository) MigrateFromConfig(sizes []int) error {
+	return nil
+}
 
 func TestPackingService_CalculatePacks(t *testing.T) {
 	packSizes := []int{250, 500, 1000, 2000, 5000}
-	service := NewPackingService(packSizes)
+	mockRepo := &mockPackSizeRepository{sizes: packSizes}
+	service := NewPackingService(mockRepo)
 
 	tests := []struct {
 		name          string

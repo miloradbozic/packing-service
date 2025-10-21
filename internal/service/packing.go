@@ -8,10 +8,10 @@ import (
 )
 
 type PackingService struct {
-	packSizeRepo *database.PackSizeRepository
+	packSizeRepo database.PackSizeRepositoryInterface
 }
 
-func NewPackingService(packSizeRepo *database.PackSizeRepository) *PackingService {
+func NewPackingService(packSizeRepo database.PackSizeRepositoryInterface) *PackingService {
 	return &PackingService{
 		packSizeRepo: packSizeRepo,
 	}

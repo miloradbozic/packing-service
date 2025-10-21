@@ -1,0 +1,35 @@
+{
+  "name": "packing-service",
+  "description": "A Go-based HTTP API service that calculates optimal packing solutions for customer orders",
+  "repository": "https://github.com/miloradbozic/packing-service",
+  "logo": "",
+  "keywords": ["go", "packing", "api", "optimization"],
+  "success_url": "/",
+  "stack": "heroku-22",
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:mini"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/go"
+    }
+  ],
+  "env": {
+    "PORT": {
+      "description": "Port for the web server",
+      "value": "8080"
+    },
+    "CONFIG_PATH": {
+      "description": "Path to configuration file",
+      "value": "config.yaml"
+    }
+  }
+}

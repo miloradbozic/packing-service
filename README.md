@@ -20,21 +20,40 @@ The service calculates the optimal number of packs needed to fulfill customer or
 - ✅ **Database migrations** for schema management
 - ✅ Docker support with PostgreSQL
 
+## Prerequisites
+
+- **Go 1.21 or later** - [Download here](https://golang.org/dl/)
+- **Docker and Docker Compose** - [Download here](https://docs.docker.com/get-docker/)
+
 ## Quick Start
 
-### Run locally
+### 🚀 One-Command Setup (Recommended)
 ```bash
-go run main.go
+# Clone the repository
+git clone <repo-url>
+cd packing-service
+
+# Start everything (database + service)
+make dev
 ```
 
 Visit http://localhost:8080 for the web UI
 
-### Run with Docker (includes PostgreSQL)
+> **Note:** If you get "address already in use" error, make sure port 8080 is free or stop any services using it.
+
+### Alternative Setup Options
+
+#### Run locally (without database)
+```bash
+go run main.go
+```
+
+#### Run with Docker (includes PostgreSQL)
 ```bash
 docker-compose up
 ```
 
-### Run locally with PostgreSQL
+#### Run locally with PostgreSQL
 ```bash
 # Start PostgreSQL
 docker-compose up -d postgres

@@ -98,7 +98,6 @@ func (h *APIHandler) ListPackSizes(w http.ResponseWriter, r *http.Request) {
 		response.PackSizes[i] = models.PackSizeResponse{
 			ID:        ps.ID,
 			Size:      ps.Size,
-			IsActive:  ps.IsActive,
 			CreatedAt: ps.CreatedAt.Format(time.RFC3339),
 			UpdatedAt: ps.UpdatedAt.Format(time.RFC3339),
 		}
@@ -126,7 +125,6 @@ func (h *APIHandler) GetPackSize(w http.ResponseWriter, r *http.Request) {
 	response := models.PackSizeResponse{
 		ID:        packSize.ID,
 		Size:      packSize.Size,
-		IsActive:  packSize.IsActive,
 		CreatedAt: packSize.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: packSize.UpdatedAt.Format(time.RFC3339),
 	}
@@ -147,7 +145,7 @@ func (h *APIHandler) CreatePackSize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	packSize, err := h.packSizeRepo.Create(req.Size, req.IsActive)
+	packSize, err := h.packSizeRepo.Create(req.Size)
 	if err != nil {
 		h.sendError(w, fmt.Sprintf("Failed to create pack size: %v", err), http.StatusBadRequest)
 		return
@@ -156,7 +154,6 @@ func (h *APIHandler) CreatePackSize(w http.ResponseWriter, r *http.Request) {
 	response := models.PackSizeResponse{
 		ID:        packSize.ID,
 		Size:      packSize.Size,
-		IsActive:  packSize.IsActive,
 		CreatedAt: packSize.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: packSize.UpdatedAt.Format(time.RFC3339),
 	}
@@ -185,7 +182,7 @@ func (h *APIHandler) UpdatePackSize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	packSize, err := h.packSizeRepo.Update(id, req.Size, req.IsActive)
+	packSize, err := h.packSizeRepo.Update(id, req.Size)
 	if err != nil {
 		h.sendError(w, fmt.Sprintf("Failed to update pack size: %v", err), http.StatusBadRequest)
 		return
@@ -194,7 +191,6 @@ func (h *APIHandler) UpdatePackSize(w http.ResponseWriter, r *http.Request) {
 	response := models.PackSizeResponse{
 		ID:        packSize.ID,
 		Size:      packSize.Size,
-		IsActive:  packSize.IsActive,
 		CreatedAt: packSize.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: packSize.UpdatedAt.Format(time.RFC3339),
 	}

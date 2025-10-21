@@ -104,28 +104,12 @@
             background: #218838;
         }
         
-        .save-all-section {
-            margin-top: 15px;
+        .saving-indicator {
+            margin-top: 10px;
             text-align: center;
-        }
-        
-        .btn-save-all {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        
-        .btn-save-all:hover {
-            background: #0056b3;
-        }
-        
-        .btn-save-all:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
+            color: #28a745;
+            font-size: 14px;
+            display: none;
         }
         
         h2 {
@@ -220,8 +204,8 @@
             </div>
         </div>
         
-        <div class="save-all-section">
-            <button class="btn-save-all" id="save-all-btn" onclick="saveAllChanges()" disabled>Save All Changes</button>
+        <div class="saving-indicator" id="saving-indicator">
+            Saving changes...
         </div>
     </div>
     
@@ -263,7 +247,6 @@
     {{end}}
     
     <script>
-        let pendingChanges = new Map(); // Track changes before saving
         let packSizeIds = new Map(); // Map pack sizes to their database IDs
         
         // Load pack sizes with IDs on page load
@@ -279,17 +262,25 @@
                 
                 // Map pack sizes to their IDs
                 data.pack_sizes.forEach(pack => {
-                    if (pack.is_active) {
-                        packSizeIds.set(pack.size, pack.id);
-                    }
+                    packSizeIds.set(pack.size, pack.id);
                 });
             } catch (error) {
                 console.error('Error loading pack sizes:', error);
             }
         }
         
-        // Update pack size when input changes
-        function updatePackSize(input) {
+        // Show saving indicator
+        function showSaving() {
+            document.getElementById('saving-indicator').style.display = 'block';
+        }
+        
+        // Hide saving indicator
+        function hideSaving() {
+            document.getElementById('saving-indicator').style.display = 'none';
+        }
+        
+        // Update pack size when input changes - save immediately
+        async function updatePackSize(input) {
             const packItem = input.closest('.pack-size-item');
             const newValue = parseInt(input.value);
             const oldValue = parseInt(packItem.dataset.size);
@@ -300,22 +291,45 @@
                 return;
             }
             
-            // Track the change
-            pendingChanges.set(oldValue, {
-                oldValue: oldValue,
-                newValue: newValue,
-                action: 'update'
-            });
+            if (newValue === oldValue) {
+                return; // No change needed
+            }
             
-            // Update the data attribute
-            packItem.dataset.size = newValue;
+            // Check if the new value already exists in other pack sizes
+            const existingItems = document.querySelectorAll('.pack-size-item');
+            for (let item of existingItems) {
+                if (item !== packItem && parseInt(item.dataset.size) === newValue) {
+                    alert('Pack size already exists');
+                    input.value = oldValue; // Restore original value
+                    return;
+                }
+            }
             
-            // Enable save all button
-            document.getElementById('save-all-btn').disabled = false;
+            showSaving();
+            
+            try {
+                await updatePackSizeInAPI(oldValue, newValue);
+                
+                // Update the data attribute and pack size mapping
+                packItem.dataset.size = newValue;
+                packSizeIds.delete(oldValue);
+                packSizeIds.set(newValue, packSizeIds.get(oldValue) || 'new');
+                
+                hideSaving();
+            } catch (error) {
+                console.error('Error updating pack size:', error);
+                if (error.message.includes('duplicate key')) {
+                    alert('Pack size already exists in the database');
+                } else {
+                    alert('Error updating pack size: ' + error.message);
+                }
+                input.value = oldValue; // Restore original value
+                hideSaving();
+            }
         }
         
-        // Delete pack size
-        function deletePackSize(button) {
+        // Delete pack size - save immediately
+        async function deletePackSize(button) {
             const packItem = button.closest('.pack-size-item');
             const value = parseInt(packItem.dataset.size);
             
@@ -323,21 +337,25 @@
                 return;
             }
             
-            // Track the deletion
-            pendingChanges.set(value, {
-                oldValue: value,
-                action: 'delete'
-            });
+            showSaving();
             
-            // Remove from display
-            packItem.remove();
-            
-            // Enable save all button
-            document.getElementById('save-all-btn').disabled = false;
+            try {
+                await deletePackSizeFromAPI(value);
+                
+                // Remove from display and mapping
+                packItem.remove();
+                packSizeIds.delete(value);
+                
+                hideSaving();
+            } catch (error) {
+                console.error('Error deleting pack size:', error);
+                alert('Error deleting pack size: ' + error.message);
+                hideSaving();
+            }
         }
         
-        // Add new pack size
-        function addPackSize() {
+        // Add new pack size - save immediately
+        async function addPackSize() {
             const input = document.getElementById('new-pack-size');
             const value = parseInt(input.value);
             
@@ -355,64 +373,35 @@
                 }
             }
             
-            // Create new pack size item
-            const container = document.getElementById('pack-sizes-container');
-            const newItem = document.createElement('div');
-            newItem.className = 'pack-size-item';
-            newItem.dataset.size = value;
-            newItem.innerHTML = `
-                <input type="number" value="${value}" min="1" onchange="updatePackSize(this)" onblur="updatePackSize(this)">
-                <button class="btn-delete" onclick="deletePackSize(this)" title="Delete">×</button>
-            `;
-            
-            container.appendChild(newItem);
-            
-            // Track the addition
-            pendingChanges.set(value, {
-                newValue: value,
-                action: 'create'
-            });
-            
-            // Clear input
-            input.value = '';
-            
-            // Enable save all button
-            document.getElementById('save-all-btn').disabled = false;
-        }
-        
-        // Save all changes
-        async function saveAllChanges() {
-            if (pendingChanges.size === 0) {
-                return;
-            }
-            
-            const saveBtn = document.getElementById('save-all-btn');
-            saveBtn.disabled = true;
-            saveBtn.textContent = 'Saving...';
+            showSaving();
             
             try {
-                // Process all changes
-                for (let [key, change] of pendingChanges) {
-                    if (change.action === 'create') {
-                        await createPackSize(change.newValue);
-                    } else if (change.action === 'update') {
-                        await updatePackSize(change.oldValue, change.newValue);
-                    } else if (change.action === 'delete') {
-                        await deletePackSizeFromAPI(change.oldValue);
-                    }
-                }
+                const response = await createPackSize(value);
+                const newPack = await response.json();
                 
-                // Clear pending changes
-                pendingChanges.clear();
+                // Create new pack size item
+                const container = document.getElementById('pack-sizes-container');
+                const newItem = document.createElement('div');
+                newItem.className = 'pack-size-item';
+                newItem.dataset.size = value;
+                newItem.innerHTML = `
+                    <input type="number" value="${value}" min="1" onchange="updatePackSize(this)" onblur="updatePackSize(this)">
+                    <button class="btn-delete" onclick="deletePackSize(this)" title="Delete">×</button>
+                `;
                 
-                // Reload page to reflect changes
-                location.reload();
+                container.appendChild(newItem);
                 
+                // Add to mapping
+                packSizeIds.set(value, newPack.id);
+                
+                // Clear input
+                input.value = '';
+                
+                hideSaving();
             } catch (error) {
-                console.error('Error saving changes:', error);
-                alert('Error saving changes: ' + error.message);
-                saveBtn.disabled = false;
-                saveBtn.textContent = 'Save All Changes';
+                console.error('Error adding pack size:', error);
+                alert('Error adding pack size: ' + error.message);
+                hideSaving();
             }
         }
         
@@ -424,8 +413,7 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    size: size,
-                    is_active: true
+                    size: size
                 })
             });
             
@@ -433,9 +421,11 @@
                 const error = await response.json();
                 throw new Error(error.error);
             }
+            
+            return response;
         }
         
-        async function updatePackSize(oldSize, newSize) {
+        async function updatePackSizeInAPI(oldSize, newSize) {
             const packId = packSizeIds.get(oldSize);
             if (!packId) {
                 throw new Error('Pack size ID not found');
@@ -447,13 +437,16 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    size: newSize,
-                    is_active: true
+                    size: newSize
                 })
             });
             
             if (!response.ok) {
                 const error = await response.json();
+                // Check for specific database constraint errors
+                if (error.error && error.error.includes('duplicate key')) {
+                    throw new Error('Pack size already exists in the database');
+                }
                 throw new Error(error.error);
             }
         }

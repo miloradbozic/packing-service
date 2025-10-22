@@ -10,7 +10,6 @@ import (
 	"github.com/miloradbozic/packing-service/internal/config"
 	"github.com/miloradbozic/packing-service/internal/database"
 	"github.com/miloradbozic/packing-service/internal/handlers"
-	"github.com/miloradbozic/packing-service/internal/middleware"
 	"github.com/miloradbozic/packing-service/internal/service"
 )
 
@@ -95,18 +94,17 @@ func (a *App) setupRoutes() error {
 
 	// API routes
 	api := router.PathPrefix("/api/v1").Subrouter()
-	api.Use(middleware.CORS)
 	
 	// Calculation routes
-	api.HandleFunc("/calculate", apiHandler.Calculate).Methods("POST", "OPTIONS")
-	api.HandleFunc("/config", apiHandler.GetConfig).Methods("GET", "OPTIONS")
+	api.HandleFunc("/calculate", apiHandler.Calculate).Methods("POST")
+	api.HandleFunc("/config", apiHandler.GetConfig).Methods("GET")
 	
 	// Pack size management routes
-	api.HandleFunc("/pack-sizes", apiHandler.ListPackSizes).Methods("GET", "OPTIONS")
-	api.HandleFunc("/pack-sizes", apiHandler.CreatePackSize).Methods("POST", "OPTIONS")
-	api.HandleFunc("/pack-sizes/{id}", apiHandler.GetPackSize).Methods("GET", "OPTIONS")
-	api.HandleFunc("/pack-sizes/{id}", apiHandler.UpdatePackSize).Methods("PUT", "OPTIONS")
-	api.HandleFunc("/pack-sizes/{id}", apiHandler.DeletePackSize).Methods("DELETE", "OPTIONS")
+	api.HandleFunc("/pack-sizes", apiHandler.ListPackSizes).Methods("GET")
+	api.HandleFunc("/pack-sizes", apiHandler.CreatePackSize).Methods("POST")
+	api.HandleFunc("/pack-sizes/{id}", apiHandler.GetPackSize).Methods("GET")
+	api.HandleFunc("/pack-sizes/{id}", apiHandler.UpdatePackSize).Methods("PUT")
+	api.HandleFunc("/pack-sizes/{id}", apiHandler.DeletePackSize).Methods("DELETE")
 
 	// Health check
 	router.HandleFunc("/health", a.healthCheck).Methods("GET")

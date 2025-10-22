@@ -260,10 +260,12 @@
                 const response = await fetch('/api/v1/pack-sizes');
                 const data = await response.json();
                 
-                // Map pack sizes to their IDs
+                // Clear existing mapping and rebuild it
+                packSizeIds.clear();
                 data.pack_sizes.forEach(pack => {
                     packSizeIds.set(pack.size, pack.id);
                 });
+                console.log('Loaded pack size IDs:', Object.fromEntries(packSizeIds));
             } catch (error) {
                 console.error('Error loading pack sizes:', error);
             }
@@ -312,8 +314,17 @@
                 
                 // Update the data attribute and pack size mapping
                 packItem.dataset.size = newValue;
+                const oldId = packSizeIds.get(oldValue);
+                console.log(`Updating pack size ${oldValue} -> ${newValue}, oldId: ${oldId}`);
                 packSizeIds.delete(oldValue);
-                packSizeIds.set(newValue, packSizeIds.get(oldValue) || 'new');
+                if (oldId) {
+                    packSizeIds.set(newValue, oldId);
+                    console.log('Updated pack size mapping:', Object.fromEntries(packSizeIds));
+                } else {
+                    // If we don't have the old ID, reload the pack sizes to get fresh data
+                    console.log('Old ID not found, reloading pack sizes...');
+                    await loadPackSizesWithIds();
+                }
                 
                 hideSaving();
             } catch (error) {
@@ -427,8 +438,8 @@
         
         async function updatePackSizeInAPI(oldSize, newSize) {
             const packId = packSizeIds.get(oldSize);
-            if (!packId) {
-                throw new Error('Pack size ID not found');
+            if (!packId || packId === 'new') {
+                throw new Error('Pack size ID not found - please refresh the page');
             }
             
             const response = await fetch(`/api/v1/pack-sizes/${packId}`, {
@@ -453,8 +464,8 @@
         
         async function deletePackSizeFromAPI(size) {
             const packId = packSizeIds.get(size);
-            if (!packId) {
-                throw new Error('Pack size ID not found');
+            if (!packId || packId === 'new') {
+                throw new Error('Pack size ID not found - please refresh the page');
             }
             
             const response = await fetch(`/api/v1/pack-sizes/${packId}`, {

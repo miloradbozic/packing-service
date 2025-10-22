@@ -112,7 +112,7 @@ func (h *APIHandler) GetPackSize(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		h.sendError(w, "Invalid pack size ID", http.StatusBadRequest)
+		h.sendError(w, fmt.Sprintf("Invalid pack size ID '%s': must be a valid integer", idStr), http.StatusBadRequest)
 		return
 	}
 
@@ -167,7 +167,7 @@ func (h *APIHandler) UpdatePackSize(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		h.sendError(w, "Invalid pack size ID", http.StatusBadRequest)
+		h.sendError(w, fmt.Sprintf("Invalid pack size ID '%s': must be a valid integer", idStr), http.StatusBadRequest)
 		return
 	}
 
@@ -204,7 +204,7 @@ func (h *APIHandler) DeletePackSize(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		h.sendError(w, "Invalid pack size ID", http.StatusBadRequest)
+		h.sendError(w, fmt.Sprintf("Invalid pack size ID '%s': must be a valid integer", idStr), http.StatusBadRequest)
 		return
 	}
 

@@ -185,19 +185,6 @@ database:
   conn_max_lifetime: "5m"
 ```
 
-### Legacy Configuration
-
-Pack sizes in `config.yaml` are now used only for initial migration:
-```yaml
-packs:
-  sizes:
-    - 250
-    - 500
-    - 1000
-    - 2000
-    - 5000
-```
-
 ## Database Management
 
 ### Run Migrations

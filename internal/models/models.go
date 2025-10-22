@@ -33,17 +33,14 @@ type PackSizeListResponse struct {
 type PackSizeResponse struct {
 	ID        int    `json:"id"`
 	Size      int    `json:"size"`
-	IsActive  bool   `json:"is_active"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 }
 
 type CreatePackSizeRequest struct {
 	Size     int  `json:"size"`
-	IsActive bool `json:"is_active"`
 }
 
 type UpdatePackSizeRequest struct {
 	Size     int  `json:"size"`
-	IsActive bool `json:"is_active"`
 }

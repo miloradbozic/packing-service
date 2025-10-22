@@ -34,7 +34,7 @@ echo -e "\n"
 echo "5. Create New Pack Size (750):"
 curl -s -X POST "$BASE_URL/pack-sizes" \
   -H "Content-Type: application/json" \
-  -d '{"size": 750, "is_active": true}' | jq .
+  -d '{"size": 750}' | jq .
 echo -e "\n"
 
 # List pack sizes again to see the new one
@@ -54,7 +54,7 @@ echo "8. Deactivate pack size 250:"
 PACK_ID=$(curl -s "$BASE_URL/pack-sizes" | jq -r '.pack_sizes[] | select(.size == 250) | .id')
 curl -s -X PUT "$BASE_URL/pack-sizes/$PACK_ID" \
   -H "Content-Type: application/json" \
-  -d '{"size": 250, "is_active": false}' | jq .
+  -d '{"size": 250}' | jq .
 echo -e "\n"
 
 # Calculate packing without 250 pack size

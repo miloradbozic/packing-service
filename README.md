@@ -131,7 +131,6 @@ make test
     {
       "id": 1,
       "size": 250,
-      "is_active": true,
       "created_at": "2024-01-01T00:00:00Z",
       "updated_at": "2024-01-01T00:00:00Z"
     }
@@ -147,7 +146,6 @@ make test
 ```json
 {
   "size": 750,
-  "is_active": true
 }
 ```
 
@@ -159,7 +157,6 @@ make test
 ```json
 {
   "size": 750,
-  "is_active": false
 }
 ```
 

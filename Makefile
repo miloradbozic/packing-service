@@ -30,13 +30,8 @@ coverage:
 	go tool cover -html=coverage.out
 
 migrate:
-	go run cmd/migrate/main.go
+	@echo "Migrations are handled automatically by the main application"
 
-migrate-cmd:
-	go build -o bin/migrate cmd/migrate/main.go
-
-db-setup: migrate-cmd
-	./bin/migrate
 
 dev:
 	docker-compose up -d postgres

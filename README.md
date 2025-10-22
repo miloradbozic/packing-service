@@ -11,14 +11,14 @@ The service calculates the optimal number of packs needed to fulfill customer or
 
 ## Features
 
-- ✅ Calculates minimum items needed to fulfill orders
-- ✅ Minimizes number of packs used
-- ✅ Web UI for easy interaction
-- ✅ RESTful API for programmatic access
-- ✅ **PostgreSQL database storage** for pack sizes
-- ✅ **CRUD API** for managing pack sizes
-- ✅ **Database migrations** for schema management
-- ✅ Docker support with PostgreSQL
+- Calculates minimum items needed to fulfill orders
+- Minimizes number of packs used
+- Web UI for easy interaction
+- RESTful API for programmatic access
+- PostgreSQL database storage for pack sizes
+- CRUD API for managing pack sizes
+- Database migrations for schema management
+- Docker support with PostgreSQL
 
 ## Prerequisites
 

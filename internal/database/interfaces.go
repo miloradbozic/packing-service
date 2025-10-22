@@ -8,5 +8,4 @@ type PackSizeRepositoryInterface interface {
 	Create(size int) (*PackSize, error)
 	Update(id int, size int) (*PackSize, error)
 	Delete(id int) error
-	MigrateFromConfig(sizes []int) error
 }

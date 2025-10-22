@@ -42,10 +42,7 @@ func main() {
 	// Initialize repository
 	packSizeRepo := database.NewPackSizeRepository(db)
 
-	// Migrate pack sizes from config if database is empty
-	if err := packSizeRepo.MigrateFromConfig(cfg.Packs.Sizes); err != nil {
-		log.Printf("Warning: Failed to migrate pack sizes from config: %v", err)
-	}
+	// Pack sizes are now managed via the API - no need for config migration
 
 	// Initialize service
 	packingService := service.NewPackingService(packSizeRepo)

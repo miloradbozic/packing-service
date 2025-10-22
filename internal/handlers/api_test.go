@@ -75,9 +75,6 @@ func (m *mockPackSizeRepository) Delete(id int) error {
 	return fmt.Errorf("pack size with id %d not found", id)
 }
 
-func (m *mockPackSizeRepository) MigrateFromConfig(sizes []int) error {
-	return nil
-}
 
 func setupTestHandler() *APIHandler {
 	mockRepo := &mockPackSizeRepository{

@@ -35,9 +35,6 @@ func (m *mockPackSizeRepository) Delete(id int) error {
 	return nil
 }
 
-func (m *mockPackSizeRepository) MigrateFromConfig(sizes []int) error {
-	return nil
-}
 
 func TestPackingService_CalculatePacks(t *testing.T) {
 	packSizes := []int{250, 500, 1000, 2000, 5000}

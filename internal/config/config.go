@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -14,7 +13,6 @@ import (
 type Config struct {
 	Server   ServerConfig   `yaml:"server"`
 	Database DatabaseConfig `yaml:"database"`
-	Packs    PacksConfig    `yaml:"packs"`
 }
 
 type ServerConfig struct {
@@ -34,9 +32,6 @@ type DatabaseConfig struct {
 	ConnMaxLifetime string `yaml:"conn_max_lifetime"`
 }
 
-type PacksConfig struct {
-	Sizes []int `yaml:"sizes"`
-}
 
 func Load(path string) (*Config, error) {
 	var config Config
@@ -54,8 +49,6 @@ func Load(path string) (*Config, error) {
 	// Override with environment variables if they exist
 	overrideWithEnvVars(&config)
 
-	// Sort pack sizes in ascending order
-	sort.Ints(config.Packs.Sizes)
 
 	return &config, nil
 }

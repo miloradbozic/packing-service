@@ -131,29 +131,3 @@ func (r *PackSizeRepository) Delete(id int) error {
 	return nil
 }
 
-// MigrateFromConfig migrates pack sizes from config to database
-func (r *PackSizeRepository) MigrateFromConfig(sizes []int) error {
-	// Get existing sizes from database
-	existingSizes, err := r.GetAllActive()
-	if err != nil {
-		return fmt.Errorf("failed to get existing sizes: %w", err)
-	}
-
-	// Create a map for quick lookup
-	existingMap := make(map[int]bool)
-	for _, size := range existingSizes {
-		existingMap[size] = true
-	}
-
-	// Insert new sizes that don't exist
-	for _, size := range sizes {
-		if !existingMap[size] {
-			_, err := r.Create(size)
-			if err != nil {
-				return fmt.Errorf("failed to migrate size %d: %w", size, err)
-			}
-		}
-	}
-
-	return nil
-}

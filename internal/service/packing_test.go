@@ -2,6 +2,7 @@ package service
 
 import (
 	"testing"
+	"time"
 
 	"github.com/miloradbozic/packing-service/internal/database"
 )
@@ -11,12 +12,18 @@ type mockPackSizeRepository struct {
 	sizes []int
 }
 
-func (m *mockPackSizeRepository) GetAllActive() ([]int, error) {
-	return m.sizes, nil
-}
-
 func (m *mockPackSizeRepository) GetAll() ([]database.PackSize, error) {
-	return nil, nil
+	// Convert sizes to PackSize objects for testing
+	packSizes := make([]database.PackSize, len(m.sizes))
+	for i, size := range m.sizes {
+		packSizes[i] = database.PackSize{
+			ID:        i + 1,
+			Size:      size,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+	}
+	return packSizes, nil
 }
 
 func (m *mockPackSizeRepository) GetByID(id int) (*database.PackSize, error) {

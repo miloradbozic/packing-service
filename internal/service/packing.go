@@ -28,14 +28,20 @@ func (ps *PackingService) CalculatePacks(itemsOrdered int) (*PackSolution, error
 		return nil, fmt.Errorf("items ordered must be positive")
 	}
 
-	// Get active pack sizes from database
-	packSizes, err := ps.packSizeRepo.GetAllActive()
+	// Get all pack sizes from database
+	packSizeObjects, err := ps.packSizeRepo.GetAll()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pack sizes: %w", err)
 	}
 
-	if len(packSizes) == 0 {
+	if len(packSizeObjects) == 0 {
 		return nil, fmt.Errorf("no pack sizes configured")
+	}
+
+	// Extract just the sizes for the algorithm
+	packSizes := make([]int, len(packSizeObjects))
+	for i, ps := range packSizeObjects {
+		packSizes[i] = ps.Size
 	}
 
 	solution := ps.findOptimalSolution(itemsOrdered, packSizes)
@@ -115,5 +121,16 @@ func (ps *PackingService) findOptimalSolution(target int, packSizes []int) *Pack
 }
 
 func (ps *PackingService) GetPackSizes() ([]int, error) {
-	return ps.packSizeRepo.GetAllActive()
+	packSizeObjects, err := ps.packSizeRepo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract just the sizes
+	sizes := make([]int, len(packSizeObjects))
+	for i, ps := range packSizeObjects {
+		sizes[i] = ps.Size
+	}
+
+	return sizes, nil
 }

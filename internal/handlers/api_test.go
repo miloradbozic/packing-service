@@ -21,14 +21,6 @@ type mockPackSizeRepository struct {
 	nextID    int
 }
 
-func (m *mockPackSizeRepository) GetAllActive() ([]int, error) {
-	var sizes []int
-	for _, ps := range m.packSizes {
-		sizes = append(sizes, ps.Size)
-	}
-	return sizes, nil
-}
-
 func (m *mockPackSizeRepository) GetAll() ([]database.PackSize, error) {
 	return m.packSizes, nil
 }

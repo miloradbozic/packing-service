@@ -13,31 +13,6 @@ func NewPackSizeRepository(db *DB) *PackSizeRepository {
 	return &PackSizeRepository{db: db}
 }
 
-// GetAllActive returns all pack sizes sorted in ascending order
-func (r *PackSizeRepository) GetAllActive() ([]int, error) {
-	query := `SELECT size FROM pack_sizes ORDER BY size ASC`
-	
-	rows, err := r.db.Query(query)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query pack sizes: %w", err)
-	}
-	defer rows.Close()
-
-	var sizes []int
-	for rows.Next() {
-		var size int
-		if err := rows.Scan(&size); err != nil {
-			return nil, fmt.Errorf("failed to scan pack size: %w", err)
-		}
-		sizes = append(sizes, size)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating pack sizes: %w", err)
-	}
-
-	return sizes, nil
-}
 
 // GetAll returns all pack sizes
 func (r *PackSizeRepository) GetAll() ([]PackSize, error) {

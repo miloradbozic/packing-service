@@ -22,7 +22,7 @@ The service calculates the optimal number of packs needed to fulfill customer or
 
 ## Prerequisites
 
-- **Go 1.21 or later** - [Download here](https://golang.org/dl/)
+- **Go 1.25 or later** - [Download here](https://golang.org/dl/)
 - **Docker and Docker Compose** - [Download here](https://docs.docker.com/get-docker/)
 
 ## Quick Start

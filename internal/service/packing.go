@@ -38,10 +38,17 @@ func (ps *PackingService) CalculatePacks(itemsOrdered int) (*PackSolution, error
 		return nil, fmt.Errorf("no pack sizes configured")
 	}
 
-	// Extract just the sizes for the algorithm
-	packSizes := make([]int, len(packSizeObjects))
-	for i, ps := range packSizeObjects {
-		packSizes[i] = ps.Size
+	// Extract just the sizes for the algorithm and validate
+	packSizes := make([]int, 0, len(packSizeObjects))
+	for _, ps := range packSizeObjects {
+		if ps.Size <= 0 {
+			return nil, fmt.Errorf("invalid pack size: %d (must be positive)", ps.Size)
+		}
+		packSizes = append(packSizes, ps.Size)
+	}
+
+	if len(packSizes) == 0 {
+		return nil, fmt.Errorf("no valid pack sizes configured")
 	}
 
 	solution := ps.findOptimalSolution(itemsOrdered, packSizes)

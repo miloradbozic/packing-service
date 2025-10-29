@@ -188,7 +188,7 @@ func TestPackingService_CalculatePacks(t *testing.T) {
 			expectedItems: 500,
 		},
 		{
-			name:         "Duplicate pack sizes",
+			name:         "Duplicate pack sizes", // Theoretical test case - duplicates not supported by database constraint
 			packSizes:    []int{250, 250, 500},
 			itemsOrdered: 300,
 			expectedPacks: map[int]int{

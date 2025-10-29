@@ -81,6 +81,15 @@ func setupTestHandler() *APIHandler {
 	return NewAPIHandler(packingService, mockRepo)
 }
 
+func setupTestHandlerWithPackSizes(packSizes []database.PackSize) *APIHandler {
+	mockRepo := &mockPackSizeRepository{
+		packSizes: packSizes,
+		nextID:    len(packSizes),
+	}
+	packingService := service.NewPackingService(mockRepo)
+	return NewAPIHandler(packingService, mockRepo)
+}
+
 // Helper function to create a request with mux variables
 func createRequestWithVars(method, url string, body *bytes.Buffer, vars map[string]string) *http.Request {
 	var req *http.Request
@@ -101,9 +110,11 @@ func TestAPIHandler_Calculate(t *testing.T) {
 	tests := []struct {
 		name           string
 		requestBody    models.CalculateRequest
+		requestBodyRaw string
 		expectedStatus int
 		expectedItems  int
 		expectedPacks  int
+		checkResponse  bool
 	}{
 		{
 			name:           "Valid calculation - 1 item",
@@ -111,6 +122,7 @@ func TestAPIHandler_Calculate(t *testing.T) {
 			expectedStatus: http.StatusOK,
 			expectedItems:  250,
 			expectedPacks:  1,
+			checkResponse:  true,
 		},
 		{
 			name:           "Valid calculation - 501 items",
@@ -118,6 +130,15 @@ func TestAPIHandler_Calculate(t *testing.T) {
 			expectedStatus: http.StatusOK,
 			expectedItems:  750,
 			expectedPacks:  2,
+			checkResponse:  true,
+		},
+		{
+			name:           "Valid calculation - large order",
+			requestBody:    models.CalculateRequest{Items: 12001},
+			expectedStatus: http.StatusOK,
+			expectedItems:  12250,
+			expectedPacks:  13,
+			checkResponse:  true,
 		},
 		{
 			name:           "Invalid calculation - negative items",
@@ -129,11 +150,32 @@ func TestAPIHandler_Calculate(t *testing.T) {
 			requestBody:    models.CalculateRequest{Items: 0},
 			expectedStatus: http.StatusBadRequest,
 		},
+		{
+			name:           "Invalid JSON body",
+			requestBodyRaw: `{invalid json}`,
+			expectedStatus:  http.StatusBadRequest,
+		},
+		{
+			name:           "Missing items field",
+			requestBodyRaw: `{}`,
+			expectedStatus:  http.StatusBadRequest,
+		},
+		{
+			name:           "Invalid items type",
+			requestBodyRaw: `{"items": "not a number"}`,
+			expectedStatus:  http.StatusBadRequest,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			body, _ := json.Marshal(tt.requestBody)
+			var body []byte
+			if tt.requestBodyRaw != "" {
+				body = []byte(tt.requestBodyRaw)
+			} else {
+				body, _ = json.Marshal(tt.requestBody)
+			}
+
 			req := httptest.NewRequest("POST", "/api/v1/calculate", bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
@@ -144,21 +186,66 @@ func TestAPIHandler_Calculate(t *testing.T) {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)
 			}
 
-			if tt.expectedStatus == http.StatusOK {
+			if tt.checkResponse && tt.expectedStatus == http.StatusOK {
 				var response models.CalculateResponse
 				if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
 					t.Fatalf("failed to unmarshal response: %v", err)
 				}
 
-				if response.TotalItems != tt.expectedItems {
+				// Only check expected values if they're set (> 0)
+				if tt.expectedItems > 0 && response.TotalItems != tt.expectedItems {
 					t.Errorf("expected total items %d, got %d", tt.expectedItems, response.TotalItems)
 				}
 
-				if response.TotalPacks != tt.expectedPacks {
+				if tt.expectedPacks > 0 && response.TotalPacks != tt.expectedPacks {
 					t.Errorf("expected total packs %d, got %d", tt.expectedPacks, response.TotalPacks)
+				}
+
+				// Verify response structure
+				if response.Items != tt.requestBody.Items {
+					t.Errorf("expected items ordered %d, got %d", tt.requestBody.Items, response.Items)
+				}
+
+				if response.ExcessItems != response.TotalItems-response.Items {
+					t.Errorf("excess items mismatch: expected %d, got %d", response.TotalItems-response.Items, response.ExcessItems)
+				}
+
+				if len(response.Packs) == 0 {
+					t.Error("expected packs in response, got empty")
+				}
+
+				// Verify total items >= items ordered
+				if response.TotalItems < response.Items {
+					t.Errorf("total items %d should be >= items ordered %d", response.TotalItems, response.Items)
 				}
 			}
 		})
+	}
+
+}
+
+func TestAPIHandler_Calculate_EmptyPackSizes(t *testing.T) {
+	handler := setupTestHandlerWithPackSizes([]database.PackSize{})
+	body, _ := json.Marshal(models.CalculateRequest{Items: 100})
+	req := httptest.NewRequest("POST", "/api/v1/calculate", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	handler.Calculate(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected status %d, got %d", http.StatusBadRequest, w.Code)
+	}
+
+	// Verify error message
+	var response models.ErrorResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to unmarshal error response: %v", err)
+	}
+
+	expectedError := "no pack sizes configured"
+	if response.Error != expectedError {
+		t.Errorf("expected error message '%s', got '%s'", expectedError, response.Error)
 	}
 }
 
